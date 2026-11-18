@@ -996,5 +996,373 @@ if (!mapVisible) {
   document.getElementById("mapbutton").click();
 }
 </script>
+<!-- FoodIN regional food bank listings -->
+<script>
+(function () {
+  // Organization details supplied from Feeding America.
+  // Coordinates are address-level Census geocoder matches,
+  // except Freestore, which was matched with the Esri geocoder.
+  const regionalBanks = [
+    [
+      "Hoosier Hills Food Bank",
+      "2333 West Industrial Park Drive, Bloomington, IN 47404",
+      "812.334.8374",
+      [39.174785, -86.567554],
+      "https://www.hhfoodbank.org/",
+      "https://www.hhfoodbank.org/find-food/",
+      "https://www.hhfoodbank.org/volunteer/",
+      "https://www.feedingamerica.org/find-your-local-foodbank/hoosier-hills-food-bank"
+    ],
+    [
+      "Tri-State Food Bank, Inc.",
+      "2504 Lynch Road, Evansville, IN 47711",
+      "812.425.0775",
+      [38.013405, -87.518483],
+      "https://www.tristatefoodbank.org/",
+      "https://tristatefoodbank.org/find-help/pantries-soup-kitchens",
+      "https://tristatefoodbank.org/get-involved/volunteer",
+      "https://www.feedingamerica.org/find-your-local-foodbank/tri-state-food-bank-inc"
+    ],
+    [
+      "Community Harvest Food Bank of Northeast Indiana, Inc.",
+      "999 East Tillman Road, Fort Wayne, IN 46816",
+      "260.447.3696",
+      [41.017266, -85.122886],
+      "https://www.communityharvest.org/",
+      "https://www.communityharvest.org/get-help/",
+      "https://www.communityharvest.org/give-help/volunteer/",
+      "https://www.feedingamerica.org/find-your-local-foodbank/community-harvest-food-bank-of-northeast-indiana-inc"
+    ],
+    [
+      "Gleaners Food Bank of Indiana, Inc.",
+      "3737 Waldemere Ave., Indianapolis, IN 46241",
+      "317.925.0191",
+      [39.708095, -86.261676],
+      "https://www.gleaners.org/",
+      "https://www.gleaners.org/findhelp/",
+      "https://www.gleaners.org/get-involved/volunteer/",
+      "https://www.feedingamerica.org/find-your-local-foodbank/gleaners-food-bank-of-indiana-inc"
+    ],
+    [
+      "Food Finders Food Bank",
+      "1204 Greenbush Street, Lafayette, IN 47904",
+      "765.471.0062",
+      [40.432137, -86.884406],
+      "https://www.food-finders.org/",
+      "https://www.food-finders.org/find-help/",
+      "https://www.food-finders.org/get-involved/",
+      "https://www.feedingamerica.org/find-your-local-foodbank/food-finders-food-bank"
+    ],
+    [
+      "Food Bank of Northwest Indiana",
+      "6490 Broadway, Merrillville, IN 46410",
+      "219.980.1777",
+      [41.500550, -87.336087],
+      "https://foodbanknwi.org/",
+      "https://foodbanknwi.org/food-assistance",
+      "https://foodbanknwi.org/volunteer/",
+      "https://www.feedingamerica.org/find-your-local-foodbank/food-bank-of-northwest-indiana"
+    ],
+    [
+      "Second Harvest Food Bank of East Central Indiana",
+      "6621 N. Old SR 3, Muncie, IN 47303",
+      "765.287.8698",
+      [40.240846, -85.366930],
+      "https://curehunger.org/",
+      "https://curehunger.org/get-help/",
+      "https://curehunger.org/get-involved/volunteer/",
+      "https://www.feedingamerica.org/find-your-local-foodbank/second-harvest-food-bank-of-east-central-indiana"
+    ],
+    [
+      "Food Bank of Northern Indiana",
+      "702 Chapin Street, South Bend, IN 46601",
+      "574.232.9986",
+      [41.667696, -86.261246],
+      "https://feedindiana.org/",
+      "https://feedindiana.org/food-pantries",
+      "https://feedindiana.org/get-involved/volunteer",
+      "https://www.feedingamerica.org/find-your-local-foodbank/food-bank-of-northern-indiana"
+    ],
+    [
+      "Terre Haute Catholic Charities Foodbank",
+      "430 N 14th 1/2 St, Terre Haute, IN 47807",
+      "812.232.1447",
+      [39.473495, -87.394270],
+      "https://ccthin.org/terre-haute-catholic-charities-foodbank",
+      "https://ccthin.org/emergency-food-assistance",
+      "https://ccthin.org/volunteers",
+      "https://www.feedingamerica.org/find-your-local-foodbank/terre-haute-catholic-charities-foodbank"
+    ],
+    [
+      "Dare to Care Food Bank",
+      "5803 Fern Valley Road, Louisville, KY 40228",
+      "502.966.3821",
+      [38.155939, -85.653453],
+      "https://daretocare.org/",
+      "https://daretocare.org/need-food/",
+      "https://daretocare.org/volunteer/",
+      "https://www.feedingamerica.org/find-your-local-foodbank/dare-to-care-food-bank"
+    ],
+    [
+      "Freestore Foodbank",
+      "3401 Rosenthal Way, Cincinnati, OH 45204",
+      "513.482.4500",
+      [39.084016, -84.580458],
+      "https://freestorefoodbank.org/",
+      null,
+      null,
+      "https://www.feedingamerica.org/find-your-local-foodbank/freestore-foodbank"
+    ]
+  ];
+
+  // The new records have no supplied inventory, dietary or eligibility data.
+  let regionalFavorites = [];
+
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem("foodin-regional-favorites") || "[]"
+    );
+
+    if (Array.isArray(saved)) {
+      regionalFavorites = saved.filter(name => typeof name === "string");
+    }
+  } catch (error) {}
+
+  dict.en.demo =
+    "Some listings and all displayed inventory and events are simulated. Regional food bank details come from Feeding America; contact the organization before visiting.";
+
+  dict.es.demo =
+    "Algunas entidades y todos los inventarios y eventos mostrados son simulados. Los datos de bancos regionales provienen de Feeding America; comunícate con la organización antes de visitarla.";
+
+  dict.en.near = "Food banks near";
+  dict.es.near = "Bancos de alimentos cerca de";
+
+  const priorRender = render;
+
+  render = function () {
+    priorRender();
+
+    const spanish = lang === "es";
+    const list = document.getElementById("results");
+    const foodQuery = document.getElementById("food").value.trim();
+    const showFavorites = document.getElementById("favoritesOnly").checked;
+
+    const eligible = regionalBanks.filter(bank =>
+      active.size === 0 &&
+      !foodQuery &&
+      (!showFavorites || regionalFavorites.includes(bank[0]))
+    );
+
+    // Update the ZIP note, which previously described every listing as simulated.
+    const zipNote = document.getElementById("placeform").nextElementSibling;
+
+    if (
+      zipNote &&
+      zipNote.querySelector('a[href="https://www.zippopotam.us/"]')
+    ) {
+      zipNote.innerHTML = spanish
+        ? 'Códigos postales: <a href="https://www.zippopotam.us/" target="_blank" rel="noopener">Zippopotam.us</a> y GeoNames. Las coordenadas son aproximadas; el código se envía a ese servicio.'
+        : 'ZIP lookup: <a href="https://www.zippopotam.us/" target="_blank" rel="noopener">Zippopotam.us</a> and GeoNames. Coordinates are approximate; ZIP searches are sent to that service.';
+    }
+
+    if (eligible.length && !list.querySelector(".bank")) {
+      list.innerHTML = "";
+    }
+
+    eligible.forEach(bank => {
+      const distance = origin ? dist(origin, bank[3]) : null;
+      const isFavorite = regionalFavorites.includes(bank[0]);
+
+      const card = document.createElement("article");
+      card.className = "bank";
+
+      const label = spanish ? {
+        source: "Banco regional · Fuente: Feeding America",
+        hours: "Horario",
+        inventory: "Inventario",
+        unknown: "Desconocido",
+        website: "Sitio web",
+        food: "Buscar alimentos",
+        volunteer: "Voluntariado",
+        sourceLink: "Fuente",
+        directions: "Indicaciones",
+        save: "Guardar favorito",
+        remove: "Quitar favorito",
+        note: "Los bancos regionales pueden dirigirle a una despensa local. Confirme los detalles antes de viajar."
+      } : {
+        source: "Regional food bank · Source: Feeding America",
+        hours: "Hours",
+        inventory: "Inventory",
+        unknown: "Unknown",
+        website: "Website",
+        food: "Find Food",
+        volunteer: "Volunteer",
+        sourceLink: "Source",
+        directions: "Directions",
+        save: "Save favorite",
+        remove: "Remove favorite",
+        note: "Regional food banks can direct you to a local feeding program. Confirm details before traveling."
+      };
+
+      card.innerHTML = `
+        <h3>${bank[0]}</h3>
+
+        <p>
+          ${distance === null ? label.unknown : distance.toFixed(1) + " mi"}
+          · ${label.source}
+        </p>
+
+        <p>
+          ${bank[1]}<br>
+          <a href="tel:${bank[2].replace(/\D/g, "")}">${bank[2]}</a>
+        </p>
+
+        <p>
+          ${label.hours}: ${label.unknown}<br>
+          ${label.inventory}: ${label.unknown}
+        </p>
+
+        <p class="small">${label.note}</p>
+
+        <p>
+          <a href="${bank[4]}" target="_blank" rel="noopener">
+            ${label.website}
+          </a>
+
+          ${bank[5] ? `
+            · <a href="${bank[5]}" target="_blank" rel="noopener">
+                ${label.food}
+              </a>
+          ` : ""}
+
+          ${bank[6] ? `
+            · <a href="${bank[6]}" target="_blank" rel="noopener">
+                ${label.volunteer}
+              </a>
+          ` : ""}
+
+          · <a href="${bank[7]}" target="_blank" rel="noopener">
+              ${label.sourceLink}
+            </a>
+
+          · <a
+              href="https://www.openstreetmap.org/directions?to=${bank[3][0]}%2C${bank[3][1]}"
+              target="_blank"
+              rel="noopener"
+            >
+              ${label.directions} ↗
+            </a>
+        </p>
+
+        <button type="button" aria-pressed="${isFavorite}">
+          ${isFavorite ? label.remove : label.save}
+        </button>
+      `;
+
+      card.querySelector("button").addEventListener("click", () => {
+        const previous = [...regionalFavorites];
+
+        regionalFavorites = isFavorite
+          ? regionalFavorites.filter(name => name !== bank[0])
+          : [...regionalFavorites, bank[0]];
+
+        try {
+          localStorage.setItem(
+            "foodin-regional-favorites",
+            JSON.stringify(regionalFavorites)
+          );
+        } catch (error) {
+          regionalFavorites = previous;
+          document.getElementById("status").textContent = t("storeerror");
+        }
+
+        render();
+      });
+
+      list.appendChild(card);
+
+      if (map && mapVisible && markers) {
+        L.circleMarker(bank[3], {
+          radius: 8,
+          color: "#fff",
+          weight: 2,
+          fillColor: "#285e43",
+          fillOpacity: 1
+        })
+        .bindPopup(`
+          <strong>${bank[0]}</strong><br>
+          ${label.source}<br>
+          ${bank[1]}<br>
+          ${bank[2]}<br>
+          ${label.inventory}: ${label.unknown}<br>
+          <a href="${bank[7]}" target="_blank" rel="noopener">
+            ${label.sourceLink}
+          </a>
+        `)
+        .addTo(markers);
+      }
+    });
+
+    // Merge the original and new cards into the selected sort order.
+    const cards = [...list.querySelectorAll(".bank")];
+
+    function bankForCard(card) {
+      const name = card.querySelector("h3").textContent;
+
+      return banks.find(bank => bank[0] === name) ||
+        regionalBanks.find(bank => bank[0] === name);
+    }
+
+    cards.sort((a, b) => {
+      const first = bankForCard(a);
+      const second = bankForCard(b);
+
+      if (document.getElementById("sort").value === "distance" && origin) {
+        return dist(origin, first[3]) - dist(origin, second[3]);
+      }
+
+      return first[0].localeCompare(second[0]);
+    });
+
+    cards.forEach(card => list.appendChild(card));
+
+    document.getElementById("summary").textContent = origin
+      ? `${t("near")} ${originName} · ${cards.length}`
+      : `${t("start")} · ${cards.length}`;
+  };
+
+  // Point the existing controls at the combined list.
+  document.getElementById("food").oninput = () => render();
+  document.getElementById("sort").onchange = () => render();
+  document.getElementById("favoritesOnly").onchange = () => render();
+
+  // Correct the earlier ZIP-search message so it doesn't call all listings fictional.
+  const status = document.getElementById("status");
+
+  new MutationObserver(() => {
+    if (
+      status.textContent ===
+      "Approximate location. Food bank records are fictional."
+    ) {
+      status.textContent =
+        "Approximate location. Some food bank records are simulated.";
+    }
+
+    if (
+      status.textContent ===
+      "Ubicación aproximada. Datos de despensas ficticios."
+    ) {
+      status.textContent =
+        "Ubicación aproximada. Algunas entidades son simuladas.";
+    }
+  }).observe(status, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+
+  updateText();
+})();
+</script>
 </body>
 </html>
