@@ -2,325 +2,764 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FoodIN — Find food near you</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FoodIN</title>
 <style>
-  * { box-sizing: border-box; }
-  body { margin: 0; background: #f7f6ef; color: #203b30; font-family: Arial, sans-serif; }
-  header, main, footer { padding: 20px max(5%, calc((100% - 1100px) / 2)); }
-  header { background: white; font-size: 26px; font-weight: bold; }
-  header span { color: #7b9c4f; }
-  .hero { background: #e7edcf; padding: 55px max(5%, calc((100% - 1100px) / 2)); }
-  h1 { font-size: clamp(38px, 6vw, 62px); margin: 0 0 16px; }
-  h1 span { color: #789d4e; }
-  h2 { font-size: 32px; margin-bottom: 8px; }
-  p { line-height: 1.5; }
-  .notice { background: #f5e6b8; padding: 15px 5%; }
-  .panel, .bank { background: white; border: 1px solid #dfe4da; border-radius: 8px; padding: 20px; margin: 15px 0; }
-  button, input { font: inherit; padding: 11px; border-radius: 5px; }
-  button { cursor: pointer; border: 1px solid #285e43; background: #285e43; color: white; }
-  input { border: 1px solid #bdcbbd; max-width: 100%; }
-  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
-  .filters button { background: white; color: #285e43; }
-  .filters button[aria-pressed="true"] { background: #285e43; color: white; }
-  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-  #map { height: 400px; border-radius: 8px; background: #e7eddf; }
-  .bank h3 { margin-top: 0; }
-  .bank p { margin: 8px 0; }
-  .food { display: inline-block; background: #edf2e5; padding: 7px; margin: 3px; border-radius: 4px; }
-  .small { color: #5f7064; font-size: 14px; }
-  footer { background: #203b30; color: white; margin-top: 50px; }
-  a { color: inherit; }
-  @media (max-width: 700px) {
-    .layout { grid-template-columns: 1fr; }
-    #map { height: 300px; }
-    .hero { padding-top: 35px; padding-bottom: 35px; }
-  }
+*{box-sizing:border-box}
+body{margin:0;background:#f7f6ef;color:#203b30;font:16px Arial,sans-serif;line-height:1.5}
+header,main,footer{padding:20px max(5%,calc((100% - 1100px)/2))}
+header{background:white;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:26px;font-weight:bold}
+.brand span{color:#789d4e}
+nav{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+a{color:#225a3f}
+.hero{background:#e7edcf;padding:45px max(5%,calc((100% - 1100px)/2))}
+h1{font-size:clamp(36px,6vw,60px);line-height:1.1;margin:0}
+h1 span{color:#789d4e}
+.notice{background:#f5e6b8;padding:15px 5%}
+h2{font-size:30px}
+.panel,.bank{background:white;border:1px solid #dfe4da;border-radius:8px;padding:18px;margin:15px 0}
+button,input,select{font:inherit;padding:10px;border-radius:5px;max-width:100%}
+button{cursor:pointer;border:1px solid #285e43;background:#285e43;color:white}
+input,select{border:1px solid #bdcbbd;background:white;color:#203b30}
+.row,.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.filters button{background:white;color:#285e43}
+.filters button[aria-pressed=true]{background:#285e43;color:white}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.bank h3{margin:0 0 8px}
+.bank p{margin:8px 0}
+.food{display:inline-block;background:#edf2e5;padding:6px;margin:3px;border-radius:4px}
+.small{color:#546b5c;font-size:14px}
+#map{height:360px;background:#e7eddf;border-radius:8px}
+.hidden{display:none}
+footer{background:#203b30;color:white;margin-top:50px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #b47318;outline-offset:2px}
+@media(max-width:700px){
+  .layout{grid-template-columns:1fr}
+  #map{height:300px}
+  .hero{padding-top:35px;padding-bottom:35px}
+}
 </style>
 </head>
 <body>
-<header>✳ food<span>IN</span></header>
 
-<section class="hero">
-  <p>HERE FOR OUR HOOSIER NEIGHBORS</p>
-  <h1>Good food.<br><span>Closer</span> than you think.</h1>
-  <p>Find food banks in your community and get an idea of what's on their shelves before you make the trip.</p>
-  <a href="#find">Find food near you ↓</a>
+<header>
+  <a class="brand" href="#top">✳ food<span>IN</span></a>
+  <nav>
+    <a href="#find" data-t="find">Find food</a>
+    <a href="#events" data-t="schedule">Mobile pantry schedule</a>
+    <button id="lang" type="button">Español</button>
+  </nav>
+</header>
+
+<section class="hero" id="top">
+  <h1><span data-t="good">Good food.</span><br>
+  <span data-t="closer">Closer than you think.</span></h1>
+  <p data-t="intro">Find sample food banks and see what might be on their shelves.</p>
+  <a href="#find" data-t="find">Find food</a>
 </section>
 
-<div class="notice">
-  <strong>You're exploring a demo.</strong>
-  All food banks, contact details, hours, and inventory shown are fictional and not verified.
+<div class="notice" data-t="demo">
+  DEMO ONLY: All food banks, contact details, inventory, schedules and limits are fictional and unverified.
 </div>
 
 <main id="find">
-  <h2>Find food near you.</h2>
-  <p>See what's available in your neighborhood.</p>
+  <h2 data-t="findnear">Find food near you</h2>
 
   <div class="panel">
-    <h3>Start with your location</h3>
-    <p>Use your current location or enter a supported Indiana city or ZIP code.</p>
-    <button id="locate" type="button">Use my location</button>
-    <form id="search-form" style="display:inline-block; margin:8px 0">
-      <label for="search">City or ZIP:</label>
-      <input id="search" placeholder="Indianapolis or 46202">
-      <button type="submit">Search</button>
+    <h3 data-t="location">Start with your location</h3>
+    <button id="locate" type="button" data-t="uselocation">Use my location</button>
+    <form id="placeform" class="row">
+      <label for="place" data-t="city">Indiana city or ZIP</label>
+      <input id="place" placeholder="Indianapolis / 46202">
+      <button data-t="search">Search</button>
     </form>
-    <p id="status" role="status" class="small">Choose a location to begin.</p>
+    <p id="status" role="status" class="small"></p>
   </div>
 
-  <h3>Find your fit</h3>
-  <div class="filters" aria-label="Filter food banks">
-    <button type="button" data-filter="vegetarian" aria-pressed="false">Vegetarian</button>
-    <button type="button" data-filter="vegan" aria-pressed="false">Vegan</button>
-    <button type="button" data-filter="gluten-free" aria-pressed="false">Gluten-free</button>
-    <button type="button" data-filter="dairy-free" aria-pressed="false">Dairy-free</button>
-    <button type="button" data-filter="nut-free" aria-pressed="false">Nut-free</button>
-    <button type="button" data-filter="holiday" aria-pressed="false">Holiday meals</button>
-    <button type="button" id="clear">Clear filters</button>
+  <div class="panel">
+    <h3 data-t="filters">Find your fit</h3>
+    <div class="row">
+      <label for="food" data-t="foodsearch">Search food or category</label>
+      <input id="food" placeholder="rice / arroz">
+      <label for="sort" data-t="sort">Sort</label>
+      <select id="sort">
+        <option value="distance" data-t="distance">Distance</option>
+        <option value="name" data-t="name">Name</option>
+      </select>
+    </div>
+    <p class="small" data-t="travel">
+      Travel times are unavailable. Distances are straight-line estimates; use directions to plan your trip.
+    </p>
+    <div class="filters" id="filters"></div>
+    <div class="row">
+      <button type="button" id="clear" data-t="clear">Clear filters</button>
+      <label>
+        <input type="checkbox" id="favoritesOnly">
+        <span data-t="favonly">Favorites only</span>
+      </label>
+    </div>
+    <p class="small" data-t="safety">
+      Dietary and allergen labels are informational, not a food safety guarantee. Always check with the food bank.
+    </p>
   </div>
-  <p class="small">Dietary and allergen labels are informational only, not a food safety guarantee. Always check with the food bank.</p>
 
-  <h2>Food banks nearby <span id="count"></span></h2>
-  <p id="subtitle" class="small">Choose a location to see nearby demo food banks.</p>
+  <h2 data-t="results">Food banks nearby</h2>
+  <p id="summary" role="status" class="small"></p>
+
   <div class="layout">
-    <div id="results" aria-live="polite">
-      <div class="panel">Share your location or search a city or ZIP to get started.</div>
-    </div>
+    <div id="results" aria-live="polite"></div>
     <div>
-      <h3>Explore the map</h3>
-      <div id="map" aria-label="Map of sample food banks"></div>
-      <p class="small">Map locations are simulated.</p>
+      <h3 data-t="map">Map</h3>
+      <p class="small" data-t="lowdata">
+        Low-data mode: the map loads only when you request it. Map services receive the area you view.
+      </p>
+      <button id="mapbutton" type="button" data-t="showmap">Show map</button>
+      <div id="map" class="hidden" aria-label="Map / Mapa"></div>
+      <p id="mapstatus" role="status" class="small"></p>
     </div>
   </div>
+
+  <section id="events">
+    <h2 data-t="schedule">Mobile pantry schedule</h2>
+    <p class="small" data-t="eventnotice">
+      Sample events only. Dates and sign-up details are not verified.
+    </p>
+    <div id="eventlist"></div>
+  </section>
 </main>
 
 <footer>
   <strong>✳ foodIN</strong>
-  <p>Good food. Good neighbors. A stronger Indiana.</p>
-  <p>Demo project — all listings are fictional.</p>
+  <p data-t="footer">Good food. Good neighbors. A stronger Indiana.</p>
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const banks = [
-  {
-    name: "Brightside Community Pantry",
-    address: "1200 Maple Street, Indianapolis, IN 46202",
-    phone: "(317) 555-0142",
-    hours: "Mon & Wed · 10 am–2 pm",
-    lat: 39.782, lng: -86.157,
-    foods: [["Fresh apples","24 bags"],["Brown rice","18 bags"],["Canned beans","32 cans"],["Oat milk","12 cartons"]],
-    tags: ["vegetarian","vegan","gluten-free","dairy-free","nut-free"]
+const dict = {
+  en: {
+    find:"Find food",
+    schedule:"Mobile pantry schedule",
+    good:"Good food.",
+    closer:"Closer than you think.",
+    intro:"Find sample food banks and see what might be on their shelves.",
+    demo:"DEMO ONLY: All food banks, contact details, inventory, schedules and limits are fictional and unverified.",
+    findnear:"Find food near you",
+    location:"Start with your location",
+    uselocation:"Use my location",
+    city:"Indiana city or ZIP",
+    search:"Search",
+    filters:"Find your fit",
+    foodsearch:"Search food or category",
+    sort:"Sort",
+    distance:"Distance",
+    name:"Name",
+    travel:"Travel times are unavailable. Distances are straight-line estimates; use directions to plan your trip.",
+    clear:"Clear filters",
+    favonly:"Favorites only",
+    safety:"Dietary and allergen labels are informational, not a food safety guarantee. Always check with the food bank.",
+    results:"Food banks nearby",
+    map:"Map",
+    lowdata:"Low-data mode: the map loads only when you request it. Map services receive the area you view.",
+    showmap:"Show map",
+    hidemap:"Hide map",
+    eventnotice:"Sample events only. Dates and sign-up details are not verified.",
+    footer:"Good food. Good neighbors. A stronger Indiana.",
+    start:"Use your location or search a supported city or ZIP.",
+    loading:"Finding your location…",
+    denied:"Location denied or unavailable. Search a city or ZIP instead.",
+    unsupported:"Demo search supports Indianapolis, Bloomington, Fort Wayne, Lafayette, Evansville, South Bend and their sample ZIP codes.",
+    using:"Using your location for this visit; it is not stored.",
+    near:"Demo results near",
+    none:"No matches. Try another food, filter, or location.",
+    inventory:"Sample inventory",
+    directions:"Directions",
+    save:"Save favorite",
+    remove:"Remove favorite",
+    service:"Service options",
+    limits:"Household limit",
+    package:"Package limit",
+    unknown:"Unknown",
+    signup:"Sign-up",
+    maploading:"Loading map…",
+    maperror:"Map unavailable. Check your connection; the list still works.",
+    eventempty:"No upcoming sample events.",
+    saved:"Favorites are stored on this device.",
+    storeerror:"Favorites could not be saved on this device.",
+    walk:"Walk-in",
+    delivery:"Delivery",
+    mobile:"Mobile pantry",
+    vegetarian:"Vegetarian",
+    vegan:"Vegan",
+    "gluten-free":"Gluten-free",
+    "dairy-free":"Dairy-free",
+    "nut-free":"Nut-free",
+    holiday:"Holiday meals",
+    produce:"Produce",
+    protein:"Protein",
+    grain:"Grains"
   },
-  {
-    name: "The Neighbor Table",
-    address: "845 Garden Avenue, Indianapolis, IN 46204",
-    phone: "(317) 555-0168",
-    hours: "Tue & Thu · 12 pm–4 pm",
-    lat: 39.766, lng: -86.139,
-    foods: [["Fresh produce","20 boxes"],["Pasta","35 boxes"],["Tomato sauce","28 jars"],["Holiday meal kits","15 kits"]],
-    tags: ["vegetarian","vegan","dairy-free","holiday"]
-  },
-  {
-    name: "Little Seed Food Pantry",
-    address: "310 Harvest Lane, Indianapolis, IN 46208",
-    phone: "(317) 555-0124",
-    hours: "Saturday · 9 am–12 pm",
-    lat: 39.821, lng: -86.177,
-    foods: [["Potatoes","16 bags"],["Peanut butter","20 jars"],["Canned vegetables","40 cans"],["Gluten-free oats","10 bags"]],
-    tags: ["vegetarian","vegan","gluten-free","dairy-free"]
-  },
-  {
-    name: "Bloomington Community Cupboard",
-    address: "410 Willow Street, Bloomington, IN 47401",
-    phone: "(812) 555-0103",
-    hours: "Wednesday · 11 am–3 pm",
-    lat: 39.166, lng: -86.53,
-    foods: [["Fresh apples","15 bags"],["Rice","25 bags"],["Canned beans","30 cans"]],
-    tags: ["vegetarian","vegan","gluten-free","dairy-free","nut-free"]
-  },
-  {
-    name: "Fort Wayne Helping Hands",
-    address: "225 Orchard Road, Fort Wayne, IN 46802",
-    phone: "(260) 555-0137",
-    hours: "Friday · 10 am–1 pm",
-    lat: 41.079, lng: -85.14,
-    foods: [["Produce boxes","18 boxes"],["Soup","24 cans"],["Holiday meal kits","12 kits"]],
-    tags: ["vegetarian","holiday"]
-  },
-  {
-    name: "Lafayette Neighborhood Pantry",
-    address: "608 Meadow Lane, Lafayette, IN 47901",
-    phone: "(765) 555-0115",
-    hours: "Tuesday · 9 am–1 pm",
-    lat: 40.419, lng: -86.891,
-    foods: [["Rice","20 bags"],["Canned vegetables","25 cans"],["Milk","10 cartons"]],
-    tags: ["vegetarian","gluten-free","nut-free"]
-  },
-  {
-    name: "Evansville Community Table",
-    address: "710 River Road, Evansville, IN 47708",
-    phone: "(812) 555-0192",
-    hours: "Thursday · 10 am–2 pm",
-    lat: 37.972, lng: -87.572,
-    foods: [["Beans","20 cans"],["Fresh produce","12 boxes"],["Holiday meal kits","8 kits"]],
-    tags: ["vegetarian","vegan","dairy-free","holiday"]
-  },
-  {
-    name: "South Bend Harvest Pantry",
-    address: "150 Prairie Avenue, South Bend, IN 46601",
-    phone: "(574) 555-0156",
-    hours: "Monday · 1 pm–5 pm",
-    lat: 41.675, lng: -86.252,
-    foods: [["Rice","18 bags"],["Apples","12 bags"],["Canned corn","22 cans"]],
-    tags: ["vegetarian","vegan","gluten-free","dairy-free","nut-free"]
+  es: {
+    find:"Buscar alimentos",
+    schedule:"Calendario de despensas móviles",
+    good:"Buena comida.",
+    closer:"Más cerca de lo que imaginas.",
+    intro:"Busca despensas de ejemplo y consulta los alimentos que podrían tener.",
+    demo:"SOLO DEMOSTRACIÓN: Todas las despensas, contactos, inventarios, fechas y límites son ficticios y no están verificados.",
+    findnear:"Encuentra alimentos cerca de ti",
+    location:"Empieza con tu ubicación",
+    uselocation:"Usar mi ubicación",
+    city:"Ciudad o código postal de Indiana",
+    search:"Buscar",
+    filters:"Encuentra lo que necesitas",
+    foodsearch:"Buscar alimento o categoría",
+    sort:"Ordenar",
+    distance:"Distancia",
+    name:"Nombre",
+    travel:"Los tiempos de viaje no están disponibles. Las distancias son en línea recta; usa las indicaciones para planear tu viaje.",
+    clear:"Borrar filtros",
+    favonly:"Solo favoritos",
+    safety:"Las etiquetas alimentarias y de alérgenos son informativas y no garantizan la seguridad. Consulta siempre con la despensa.",
+    results:"Despensas cercanas",
+    map:"Mapa",
+    lowdata:"Modo de bajo consumo: el mapa se carga solo cuando lo solicitas. Los servicios de mapas reciben la zona que consultas.",
+    showmap:"Mostrar mapa",
+    hidemap:"Ocultar mapa",
+    eventnotice:"Solo eventos de ejemplo. Las fechas y los datos de inscripción no están verificados.",
+    footer:"Buena comida. Buenos vecinos. Una Indiana más fuerte.",
+    start:"Usa tu ubicación o busca una ciudad o código postal admitido.",
+    loading:"Buscando tu ubicación…",
+    denied:"Ubicación denegada o no disponible. Busca una ciudad o código postal.",
+    unsupported:"La búsqueda de demostración admite Indianapolis, Bloomington, Fort Wayne, Lafayette, Evansville, South Bend y sus códigos postales de ejemplo.",
+    using:"Usando tu ubicación durante esta visita; no se guarda.",
+    near:"Resultados de ejemplo cerca de",
+    none:"No hay resultados. Prueba otro alimento, filtro o ubicación.",
+    inventory:"Inventario de ejemplo",
+    directions:"Indicaciones",
+    save:"Guardar favorito",
+    remove:"Quitar favorito",
+    service:"Opciones de servicio",
+    limits:"Límite por hogar",
+    package:"Límite de paquetes",
+    unknown:"Desconocido",
+    signup:"Inscripción",
+    maploading:"Cargando mapa…",
+    maperror:"Mapa no disponible. Revisa tu conexión; la lista sigue funcionando.",
+    eventempty:"No hay eventos de ejemplo próximos.",
+    saved:"Los favoritos se guardan en este dispositivo.",
+    storeerror:"No se pudieron guardar los favoritos en este dispositivo.",
+    walk:"Sin cita",
+    delivery:"Entrega",
+    mobile:"Despensa móvil",
+    vegetarian:"Vegetariano",
+    vegan:"Vegano",
+    "gluten-free":"Sin gluten",
+    "dairy-free":"Sin lácteos",
+    "nut-free":"Sin frutos secos",
+    holiday:"Comidas festivas",
+    produce:"Frutas y verduras",
+    protein:"Proteínas",
+    grain:"Cereales"
   }
+};
+
+const foods = {
+  apples:["Apples","Manzanas","produce"],
+  rice:["Rice","Arroz","grain"],
+  beans:["Canned beans","Frijoles enlatados","protein"],
+  milk:["Oat milk","Leche de avena","grain"],
+  produce:["Fresh produce","Frutas y verduras frescas","produce"],
+  pasta:["Pasta","Pasta","grain"],
+  sauce:["Tomato sauce","Salsa de tomate","produce"],
+  holiday:["Holiday meal kits","Paquetes de comida festiva","protein"],
+  potatoes:["Potatoes","Papas","produce"],
+  peanut:["Peanut butter","Mantequilla de maní","protein"],
+  veg:["Canned vegetables","Verduras enlatadas","produce"],
+  oats:["Gluten-free oats","Avena sin gluten","grain"],
+  soup:["Soup","Sopa","protein"],
+  dairy:["Milk","Leche","protein"],
+  corn:["Canned corn","Maíz enlatado","produce"]
+};
+
+// All records and quantities are fictional.
+const banks = [
+  [
+    "Brightside Community Pantry",
+    "1200 Maple Street, Indianapolis, IN 46202",
+    "(317) 555-0142",
+    [39.782,-86.157],
+    ["Mon & Wed · 10 am–2 pm","Lun y mié · 10 a. m.–2 p. m."],
+    [["apples",24,"bags"],["rice",18,"bags"],["beans",32,"cans"],["milk",12,"cartons"]],
+    ["vegetarian","vegan","gluten-free","dairy-free","nut-free"],
+    ["walk"],
+    ["6 people","6 personas"],
+    ["1 package","1 paquete"]
+  ],
+  [
+    "The Neighbor Table",
+    "845 Garden Avenue, Indianapolis, IN 46204",
+    "(317) 555-0168",
+    [39.766,-86.139],
+    ["Tue & Thu · 12 pm–4 pm","Mar y jue · 12–4 p. m."],
+    [["produce",20,"boxes"],["pasta",35,"boxes"],["sauce",28,"jars"],["holiday",15,"kits"]],
+    ["vegetarian","vegan","dairy-free","holiday"],
+    ["walk","delivery"],
+    null,
+    null
+  ],
+  [
+    "Little Seed Food Pantry",
+    "310 Harvest Lane, Indianapolis, IN 46208",
+    "(317) 555-0124",
+    [39.821,-86.177],
+    ["Saturday · 9 am–12 pm","Sábado · 9 a. m.–12 p. m."],
+    [["potatoes",16,"bags"],["peanut",20,"jars"],["veg",40,"cans"],["oats",10,"bags"]],
+    ["vegetarian","vegan","gluten-free","dairy-free"],
+    ["mobile"],
+    null,
+    ["2 packages","2 paquetes"]
+  ],
+  [
+    "Bloomington Community Cupboard",
+    "410 Willow Street, Bloomington, IN 47401",
+    "(812) 555-0103",
+    [39.166,-86.53],
+    ["Wednesday · 11 am–3 pm","Miércoles · 11 a. m.–3 p. m."],
+    [["apples",15,"bags"],["rice",25,"bags"],["beans",30,"cans"]],
+    ["vegetarian","vegan","gluten-free","dairy-free","nut-free"],
+    ["walk"],
+    null,
+    null
+  ],
+  [
+    "Fort Wayne Helping Hands",
+    "225 Orchard Road, Fort Wayne, IN 46802",
+    "(260) 555-0137",
+    [41.079,-85.14],
+    ["Friday · 10 am–1 pm","Viernes · 10 a. m.–1 p. m."],
+    [["produce",18,"boxes"],["soup",24,"cans"],["holiday",12,"kits"]],
+    ["vegetarian","holiday"],
+    ["mobile"],
+    null,
+    null
+  ],
+  [
+    "Lafayette Neighborhood Pantry",
+    "608 Meadow Lane, Lafayette, IN 47901",
+    "(765) 555-0115",
+    [40.419,-86.891],
+    ["Tuesday · 9 am–1 pm","Martes · 9 a. m.–1 p. m."],
+    [["rice",20,"bags"],["veg",25,"cans"],["dairy",10,"cartons"]],
+    ["vegetarian","gluten-free","nut-free"],
+    ["walk"],
+    null,
+    null
+  ],
+  [
+    "Evansville Community Table",
+    "710 River Road, Evansville, IN 47708",
+    "(812) 555-0192",
+    [37.972,-87.572],
+    ["Thursday · 10 am–2 pm","Jueves · 10 a. m.–2 p. m."],
+    [["beans",20,"cans"],["produce",12,"boxes"],["holiday",8,"kits"]],
+    ["vegetarian","vegan","dairy-free","holiday"],
+    ["delivery"],
+    null,
+    null
+  ],
+  [
+    "South Bend Harvest Pantry",
+    "150 Prairie Avenue, South Bend, IN 46601",
+    "(574) 555-0156",
+    [41.675,-86.252],
+    ["Monday · 1 pm–5 pm","Lunes · 1–5 p. m."],
+    [["rice",18,"bags"],["apples",12,"bags"],["corn",22,"cans"]],
+    ["vegetarian","vegan","gluten-free","dairy-free","nut-free"],
+    [],
+    null,
+    null
+  ]
 ];
 
 const places = {
-  "indianapolis": [39.7684,-86.1581],
-  "46202": [39.782,-86.157],
-  "46204": [39.768,-86.157],
-  "46208": [39.821,-86.177],
-  "bloomington": [39.1653,-86.5264],
-  "47401": [39.1653,-86.5264],
-  "fort wayne": [41.0793,-85.1394],
-  "46802": [41.0793,-85.1394],
-  "lafayette": [40.4167,-86.8753],
-  "47901": [40.4167,-86.8753],
-  "evansville": [37.9716,-87.5711],
-  "47708": [37.9716,-87.5711],
-  "south bend": [41.6764,-86.252],
-  "46601": [41.6764,-86.252]
+  "indianapolis":[39.7684,-86.1581],
+  "46202":[39.782,-86.157],
+  "46204":[39.768,-86.157],
+  "46208":[39.821,-86.177],
+  "bloomington":[39.1653,-86.5264],
+  "47401":[39.1653,-86.5264],
+  "fort wayne":[41.0793,-85.1394],
+  "46802":[41.0793,-85.1394],
+  "lafayette":[40.4167,-86.8753],
+  "47901":[40.4167,-86.8753],
+  "evansville":[37.9716,-87.5711],
+  "47708":[37.9716,-87.5711],
+  "south bend":[41.6764,-86.252],
+  "46601":[41.6764,-86.252]
+};
+
+const events = [
+  {
+    date:"2026-12-05",
+    time:["10 am–12 pm","10 a. m.–12 p. m."],
+    bank:2,
+    signup:["Walk-in; no sign-up required","Sin cita; no se requiere inscripción"]
+  },
+  {
+    date:"2026-12-12",
+    time:["11 am–1 pm","11 a. m.–1 p. m."],
+    bank:4,
+    signup:null
+  }
+];
+
+const units = {
+  bags:["bags","bolsas"],
+  cans:["cans","latas"],
+  cartons:["cartons","envases"],
+  boxes:["boxes","cajas"],
+  jars:["jars","frascos"],
+  kits:["kits","paquetes"]
 };
 
 const $ = id => document.getElementById(id);
+let lang = "en";
 let origin = null;
 let originName = "";
-const active = new Set();
-let map, markers;
+let active = new Set();
+let map = null;
+let markers = null;
+let mapVisible = false;
+let mapLoading = false;
+let statusKey = "start";
+let favorites = [];
 
-if (window.L) {
-  map = L.map("map", {scrollWheelZoom: false}).setView([39.85,-86.1], 7);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
-  }).addTo(map);
-  markers = L.layerGroup().addTo(map);
-} else {
-  $("map").textContent = "Map unavailable. Check your internet connection. The list still works.";
+try {
+  const stored = JSON.parse(localStorage.getItem("foodin-favorites") || "[]");
+  if (Array.isArray(stored)) {
+    favorites = stored.filter(x =>
+      Number.isInteger(x) && x >= 0 && x < banks.length
+    );
+  }
+} catch (e) {}
+
+const t = key => dict[lang][key] || key;
+const ix = () => lang === "en" ? 0 : 1;
+
+function dist(a,b) {
+  const rad = x => x * Math.PI / 180;
+  const dLat = rad(b[0] - a[0]);
+  const dLng = rad(b[1] - a[1]);
+  const value = Math.sin(dLat/2)**2 +
+    Math.cos(rad(a[0])) * Math.cos(rad(b[0])) *
+    Math.sin(dLng/2)**2;
+  return 3958.8 * 2 * Math.atan2(Math.sqrt(value),Math.sqrt(1-value));
 }
 
-function distance(a, b) {
-  const rad = x => x * Math.PI / 180;
-  const dLat = rad(b.lat - a[0]);
-  const dLng = rad(b.lng - a[1]);
-  const x = Math.sin(dLat/2)**2 +
-    Math.cos(rad(a[0])) * Math.cos(rad(b.lat)) * Math.sin(dLng/2)**2;
-  return 3958.8 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+function updateText() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-t]").forEach(element => {
+    element.textContent = t(element.dataset.t);
+  });
+  $("lang").textContent = lang === "en" ? "Español" : "English";
+  $("status").textContent = t(statusKey);
+  $("mapbutton").textContent = t(mapVisible ? "hidemap" : "showmap");
+
+  $("filters").innerHTML = [
+    "vegetarian","vegan","gluten-free","dairy-free","nut-free","holiday"
+  ].map(key => `
+    <button type="button" data-filter="${key}" aria-pressed="${active.has(key)}">
+      ${t(key)}
+    </button>
+  `).join("");
+
+  render();
+}
+
+function matches(bank) {
+  const query = $("food").value.trim().toLocaleLowerCase();
+
+  return [...active].every(filter => bank[6].includes(filter)) &&
+    (!$("favoritesOnly").checked || favorites.includes(banks.indexOf(bank))) &&
+    (!query || bank[5].some(([key]) => {
+      const food = foods[key];
+      return [
+        food[0],
+        food[1],
+        food[2],
+        t(food[2]),
+        dict.en[food[2]],
+        dict.es[food[2]]
+      ].some(value => value.toLocaleLowerCase().includes(query));
+    }));
 }
 
 function render() {
-  if (!origin) return;
+  const results = banks.map((bank,index) => ({
+    bank,
+    index,
+    distance: origin ? dist(origin,bank[3]) : null
+  })).filter(item => matches(item.bank));
 
-  const results = banks
-    .map(b => ({...b, miles: distance(origin, b)}))
-    .filter(b => [...active].every(f => b.tags.includes(f)))
-    .sort((a,b) => a.miles - b.miles);
+  results.sort((a,b) =>
+    $("sort").value === "name" || !origin
+      ? a.bank[0].localeCompare(b.bank[0])
+      : a.distance - b.distance
+  );
 
-  $("count").textContent = `(${results.length})`;
-  $("subtitle").textContent = `Showing demo results near ${originName}, sorted by straight-line distance.`;
-  if (markers) markers.clearLayers();
+  $("summary").textContent = origin
+    ? `${t("near")} ${originName} · ${results.length}`
+    : `${t("start")} · ${results.length}`;
 
-  if (!results.length) {
-    $("results").innerHTML = '<div class="panel"><strong>No food banks match.</strong><p>Try removing a filter.</p></div>';
-    return;
-  }
+  $("results").innerHTML = results.length
+    ? results.map(({bank,index,distance}) => `
+      <article class="bank">
+        <h3>${bank[0]}</h3>
+        <p>${distance === null ? t("unknown") : distance.toFixed(1) + " mi"} · DEMO</p>
+        <p>
+          ${bank[1]}<br>
+          <a href="tel:${bank[2].replace(/\D/g,"")}">${bank[2]}</a><br>
+          ${bank[4][ix()]}
+        </p>
+        <p>
+          ${t("service")}: ${bank[7].length ? bank[7].map(t).join(", ") : t("unknown")}<br>
+          ${t("limits")}: ${bank[8] ? bank[8][ix()] : t("unknown")}<br>
+          ${t("package")}: ${bank[9] ? bank[9][ix()] : t("unknown")}
+        </p>
+        <p>
+          <a href="https://www.openstreetmap.org/directions?to=${bank[3][0]}%2C${bank[3][1]}" target="_blank" rel="noopener">
+            ${t("directions")} ↗
+          </a>
+        </p>
+        <button type="button" data-favorite="${index}" aria-pressed="${favorites.includes(index)}">
+          ${t(favorites.includes(index) ? "remove" : "save")}
+        </button>
+        <h4>${t("inventory")} · DEMO</h4>
+        ${bank[5].map(([food,number,unit]) => `
+          <span class="food">${foods[food][ix()]} · ${number} ${units[unit][ix()]}</span>
+        `).join("")}
+        <p class="small">${bank[6].map(t).join(" · ")}</p>
+      </article>
+    `).join("")
+    : `<div class="panel">${t("none")}</div>`;
 
-  $("results").innerHTML = results.map(b => `
-    <article class="bank">
-      <h3>${b.name}</h3>
-      <p><strong>${b.miles.toFixed(1)} miles away</strong> · Demo food bank</p>
-      <p>${b.address}</p>
-      <p><a href="tel:${b.phone.replace(/\D/g,"")}">${b.phone}</a></p>
-      <p>${b.hours}</p>
-      <h4>Sample inventory — simulated</h4>
-      <div>${b.foods.map(f => `<span class="food">${f[0]} · ${f[1]}</span>`).join("")}</div>
-      <p class="small">${b.tags.join(" · ")}</p>
-    </article>
-  `).join("");
+  renderEvents();
 
-  if (map) {
-    results.forEach(b => {
-      L.circleMarker([b.lat,b.lng], {
-        radius: 8, color: "#fff", weight: 2,
-        fillColor: "#568149", fillOpacity: 1
+  if (map && mapVisible) {
+    markers.clearLayers();
+
+    results.forEach(({bank,distance}) => {
+      L.circleMarker(bank[3], {
+        radius:8,
+        color:"#fff",
+        weight:2,
+        fillColor:"#568149",
+        fillOpacity:1
       }).bindPopup(
-        `<strong>${b.name}</strong><br>Demo food bank · ${b.miles.toFixed(1)} miles<br>${b.address}<br>${b.phone}<br>${b.hours}<br><strong>Sample inventory:</strong> ${b.foods.map(f => `${f[0]} (${f[1]})`).join(", ")}`
+        `<strong>${bank[0]}</strong><br>
+        DEMO · ${distance === null ? t("unknown") : distance.toFixed(1) + " mi"}<br>
+        ${bank[1]}<br>
+        ${bank[2]}<br>
+        ${bank[4][ix()]}<br>
+        ${t("inventory")}: ${bank[5].map(([food,number,unit]) =>
+          foods[food][ix()] + " " + number + " " + units[unit][ix()]
+        ).join(", ")}`
       ).addTo(markers);
     });
-    const bounds = L.latLngBounds(results.map(b => [b.lat,b.lng]));
-    bounds.extend(origin);
-    map.fitBounds(bounds, {padding: [30,30], maxZoom: 11});
+
+    if (results.length) {
+      const bounds = L.latLngBounds(results.map(item => item.bank[3]));
+      if (origin) bounds.extend(origin);
+      map.fitBounds(bounds, {padding:[25,25],maxZoom:11});
+    }
+
+    setTimeout(() => map.invalidateSize(),0);
   }
 }
 
-$("search-form").addEventListener("submit", e => {
-  e.preventDefault();
-  const query = $("search").value.trim().toLowerCase().replace(/,\s*in(diana)?$/, "").trim();
-  if (!places[query]) {
-    $("status").textContent = "Try Indianapolis, Bloomington, Fort Wayne, Lafayette, Evansville, South Bend, or ZIP codes 46202, 47401, 46802, 47901, 47708, or 46601.";
-    return;
-  }
-  origin = places[query];
-  originName = $("search").value.trim();
-  $("status").textContent = `Showing demo results for ${originName}. Your search is not stored.`;
-  render();
-});
+function renderEvents() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
 
-$("locate").addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    $("status").textContent = "Location is unavailable. Enter a supported city or ZIP instead.";
+  const upcoming = events.filter(event =>
+    new Date(event.date + "T00:00:00") >= today
+  );
+
+  $("eventlist").innerHTML = upcoming.length
+    ? upcoming.map(event => {
+      const bank = banks[event.bank];
+      const date = new Intl.DateTimeFormat(
+        lang === "en" ? "en-US" : "es-US",
+        {dateStyle:"full"}
+      ).format(new Date(event.date + "T12:00:00"));
+
+      return `
+        <article class="panel">
+          <h3>${bank[0]} · DEMO</h3>
+          <p>
+            ${date} · ${event.time[ix()]}<br>
+            ${bank[1]}<br>
+            ${t("signup")}: ${event.signup ? event.signup[ix()] : t("unknown")}
+          </p>
+          <a href="https://www.openstreetmap.org/directions?to=${bank[3][0]}%2C${bank[3][1]}" target="_blank" rel="noopener">
+            ${t("directions")} ↗
+          </a>
+        </article>
+      `;
+    }).join("")
+    : `<div class="panel">${t("eventempty")}</div>`;
+}
+
+$("lang").onclick = () => {
+  lang = lang === "en" ? "es" : "en";
+  updateText();
+};
+
+$("placeform").onsubmit = event => {
+  event.preventDefault();
+  const query = $("place").value.trim().toLowerCase()
+    .replace(/,\s*in(diana)?$/,"").trim();
+
+  if (!places[query]) {
+    statusKey = "unsupported";
+    $("status").textContent = t(statusKey);
     return;
   }
-  $("status").textContent = "Finding your location…";
+
+  origin = places[query];
+  originName = $("place").value.trim();
+  statusKey = "using";
+  $("status").textContent = t(statusKey);
+  render();
+};
+
+$("locate").onclick = () => {
+  if (!navigator.geolocation) {
+    statusKey = "denied";
+    $("status").textContent = t(statusKey);
+    return;
+  }
+
+  statusKey = "loading";
+  $("status").textContent = t(statusKey);
   $("locate").disabled = true;
+
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      origin = [pos.coords.latitude, pos.coords.longitude];
-      originName = "your location";
-      $("status").textContent = "Using your location for this visit. It is not stored.";
+    position => {
+      origin = [position.coords.latitude,position.coords.longitude];
+      originName = lang === "en" ? "your location" : "tu ubicación";
+      statusKey = "using";
+      $("status").textContent = t(statusKey);
       $("locate").disabled = false;
       render();
     },
-    err => {
-      $("status").textContent = err.code === 1
-        ? "Location permission was denied. Enter a city or ZIP instead."
-        : "Location is unavailable. Enter a city or ZIP instead.";
+    () => {
+      statusKey = "denied";
+      $("status").textContent = t(statusKey);
       $("locate").disabled = false;
     },
-    {enableHighAccuracy: false, timeout: 10000}
+    {timeout:10000,enableHighAccuracy:false}
   );
-});
+};
 
-document.querySelectorAll("[data-filter]").forEach(button => {
-  button.addEventListener("click", () => {
-    const filter = button.dataset.filter;
-    active.has(filter) ? active.delete(filter) : active.add(filter);
-    button.setAttribute("aria-pressed", String(active.has(filter)));
-    render();
-  });
-});
+$("filters").onclick = event => {
+  const key = event.target.dataset.filter;
+  if (!key) return;
+  active.has(key) ? active.delete(key) : active.add(key);
+  updateText();
+};
 
-$("clear").addEventListener("click", () => {
+$("clear").onclick = () => {
   active.clear();
-  document.querySelectorAll("[data-filter]").forEach(button => {
-    button.setAttribute("aria-pressed", "false");
-  });
+  $("food").value = "";
+  $("favoritesOnly").checked = false;
+  updateText();
+};
+
+$("food").oninput = render;
+$("sort").onchange = render;
+$("favoritesOnly").onchange = render;
+
+$("results").onclick = event => {
+  const raw = event.target.dataset.favorite;
+  if (raw === undefined) return;
+
+  const index = Number(raw);
+  const old = [...favorites];
+
+  favorites = favorites.includes(index)
+    ? favorites.filter(value => value !== index)
+    : [...favorites,index];
+
+  try {
+    localStorage.setItem("foodin-favorites",JSON.stringify(favorites));
+    $("status").textContent = t("saved");
+  } catch (error) {
+    favorites = old;
+    $("status").textContent = t("storeerror");
+  }
+
   render();
-});
+};
+
+$("mapbutton").onclick = () => {
+  if (mapLoading) return;
+
+  if (mapVisible) {
+    mapVisible = false;
+    $("map").classList.add("hidden");
+    $("mapbutton").textContent = t("showmap");
+    return;
+  }
+
+  mapVisible = true;
+  $("map").classList.remove("hidden");
+  $("mapbutton").textContent = t("hidemap");
+
+  if (map) {
+    render();
+    return;
+  }
+
+  mapLoading = true;
+  $("mapstatus").textContent = t("maploading");
+
+  const css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  document.head.appendChild(css);
+
+  const script = document.createElement("script");
+  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+
+  script.onload = () => {
+    mapLoading = false;
+    map = L.map("map",{scrollWheelZoom:false}).setView([39.85,-86.1],7);
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom:19,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }
+    ).addTo(map);
+
+    markers = L.layerGroup().addTo(map);
+    $("mapstatus").textContent = "";
+    render();
+  };
+
+  script.onerror = () => {
+    mapLoading = false;
+    mapVisible = false;
+    $("map").classList.add("hidden");
+    $("mapbutton").textContent = t("showmap");
+    $("mapstatus").textContent = t("maperror");
+  };
+
+  document.head.appendChild(script);
+};
+
+updateText();
 </script>
 </body>
 </html>
