@@ -761,5 +761,240 @@ $("mapbutton").onclick = () => {
 
 updateText();
 </script>
+<!-- FoodIN Indiana map and ZIP update -->
+<style>
+:root {
+  --forest: #285d46;
+  --blue: #85b8cd;
+  --sand: #e8c795;
+  --cream: #faf7ef;
+}
+
+body {
+  background: var(--cream);
+  color: #263932;
+}
+
+header {
+  border-bottom: 1px solid #e4e7db;
+}
+
+.brand img {
+  display: block;
+  width: min(250px, 55vw);
+  height: auto;
+}
+
+.hero {
+  padding-top: 22px;
+  padding-bottom: 22px;
+  background: #eaf0df;
+}
+
+.hero h1 {
+  font-size: clamp(28px, 3vw, 42px);
+}
+
+.hero p {
+  margin: 8px 0;
+}
+
+.notice {
+  background: #f6e6c6;
+}
+
+.layout {
+  display: block;
+  background: white;
+  padding: 16px;
+  border: 1px solid #d8e2d8;
+  border-radius: 12px;
+}
+
+#map {
+  height: clamp(320px, 45vh, 480px);
+  border-radius: 8px;
+}
+
+.panel, .bank {
+  border-color: #d8e2d8;
+  box-shadow: 0 3px 15px #285d460a;
+}
+
+.bank {
+  border-left: 4px solid var(--blue);
+}
+
+button {
+  background: var(--forest);
+  border-color: var(--forest);
+}
+
+.filters button {
+  color: var(--forest);
+  border-color: #a4bfad;
+}
+
+.filters button[aria-pressed=true] {
+  background: var(--forest);
+}
+
+a {
+  color: var(--forest);
+}
+
+footer {
+  background: #244e3c;
+}
+
+.leaflet-control-zoom a {
+  color: var(--forest) !important;
+}
+
+#results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#results .bank {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  #results {
+    grid-template-columns: 1fr;
+  }
+
+  #map {
+    height: 320px;
+  }
+}
+</style>
+
+<script>
+// Keep the existing demo records, filters, language toggle and favorites.
+const brandLink = document.querySelector("header .brand");
+brandLink.innerHTML = '<img src="foodin-logo.png" alt="FoodIN Indiana Harvest">';
+
+// Put the map before the search controls, and results below the filters.
+const mapLayout = document.querySelector(".layout");
+const resultList = document.getElementById("results");
+const locationPanel = document.getElementById("placeform").closest(".panel");
+
+locationPanel.before(mapLayout);
+document.getElementById("events").before(resultList);
+
+dict.en.lowdata =
+  "Map tiles load from OpenStreetMap; that service receives the area viewed. ZIP locations are approximate.";
+
+dict.es.lowdata =
+  "El mapa se carga de OpenStreetMap; ese servicio recibe el área consultada. Las ubicaciones por código postal son aproximadas.";
+
+// Keep the map centered on the selected location.
+const originalRender = render;
+
+render = function () {
+  originalRender();
+
+  if (map && mapVisible && origin) {
+    map.setView(origin, 11);
+  }
+};
+
+const originalCitySearch = document.getElementById("placeform").onsubmit;
+let zipRequest = 0;
+
+document.getElementById("placeform").onsubmit = async function (event) {
+  const query = document.getElementById("place").value.trim();
+
+  // Keep the existing city search.
+  if (!/^\d{5}$/.test(query)) {
+    zipRequest++;
+    return originalCitySearch.call(this, event);
+  }
+
+  event.preventDefault();
+
+  const request = ++zipRequest;
+  const status = document.getElementById("status");
+
+  status.textContent = lang === "es"
+    ? "Buscando código postal…"
+    : "Looking up ZIP code…";
+
+  try {
+    const response = await fetch(
+      "https://api.zippopotam.us/us/" + encodeURIComponent(query)
+    );
+
+    if (request !== zipRequest) return;
+
+    if (response.status === 404) {
+      status.textContent = lang === "es"
+        ? "Código postal no encontrado."
+        : "ZIP code not found.";
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error("ZIP lookup failed");
+    }
+
+    const data = await response.json();
+
+    if (request !== zipRequest) return;
+
+    const place = data.places && data.places.find(
+      item => item["state abbreviation"] === "IN"
+    );
+
+    if (
+      !place ||
+      !Number.isFinite(Number(place.latitude)) ||
+      !Number.isFinite(Number(place.longitude))
+    ) {
+      status.textContent = lang === "es"
+        ? "Ingresa un código postal de Indiana."
+        : "Enter an Indiana ZIP code.";
+      return;
+    }
+
+    origin = [
+      Number(place.latitude),
+      Number(place.longitude)
+    ];
+
+    originName = query;
+
+    status.textContent = lang === "es"
+      ? "Ubicación aproximada. Datos de despensas ficticios."
+      : "Approximate location. Food bank records are fictional.";
+
+    render();
+  } catch (error) {
+    if (request !== zipRequest) return;
+
+    status.textContent = lang === "es"
+      ? "No se pudo buscar el código postal. Revisa tu conexión e inténtalo de nuevo."
+      : "ZIP lookup unavailable. Check your connection and try again.";
+  }
+};
+
+const zipNote = document.createElement("p");
+zipNote.className = "small";
+
+zipNote.innerHTML =
+  'ZIP lookup: <a href="https://www.zippopotam.us/" target="_blank" rel="noopener">Zippopotam.us</a>, using GeoNames postal data. Coordinates are approximate. ZIP searches are sent to that service; food bank listings are simulated.';
+
+document.getElementById("placeform").after(zipNote);
+
+updateText();
+
+// Show the map automatically when the page opens.
+if (!mapVisible) {
+  document.getElementById("mapbutton").click();
+}
+</script>
 </body>
 </html>
